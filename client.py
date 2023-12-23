@@ -1,6 +1,7 @@
 from websockets.sync.client import connect
 import json
 import argparse
+import threading
 
 parser = argparse.ArgumentParser()
 parser.add_argument('from_client_id', type=int, nargs=1, help='from client ID')
@@ -26,4 +27,5 @@ def send_message_to_server(msg: str):
 
 while True:
     message = input("> ")
-    send_message_to_server(message)
+    send_message_to_server_thread = threading.Thread(target=send_message_to_server, args=(message,))
+    send_message_to_server_thread.start()
