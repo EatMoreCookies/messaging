@@ -2,31 +2,44 @@ import asyncio
 from websockets.server import serve
 from datetime import datetime
 import json
+from models import MessageType
 
 connections = {}
 
-async def echo(websocket):
+async def handle(websocket):
     async for json_string in websocket:
         message_json = json.loads(json_string)
         
         from_id = message_json['from_id']
         to_id = message_json['to_id']
         message = message_json['body']
-        type = message_json['type']
+        type = MessageType(int(message_json['type']))
+
+        if from_id not in connections:
+            print(f"Adding {from_id} to list of live connections...")
 
         connections[from_id] = websocket
 
-        response_msg = f"Recieved message {message} from {from_id} to {to_id} at {datetime.now()}. {len(connections)} connections."
+        response_msg = f"Received message {message} from {from_id} to {to_id} of type {MessageType(type)} at {datetime.now()}. {len(connections)} connections."
         print(response_msg)
 
-        # await websocket.send("__message__received__")
+        response_json = {
+            "type": MessageType.MESSAGE_RECIEVED.value,
+            "body": "Message was received by server"
+        }
 
-        if to_id in connections:
+        await websocket.send(json.dumps(response_json))
+
+        if type == MessageType.CHAT and to_id in connections:
             print(f"Sending message from {from_id} to {to_id}")
-            await connections[to_id].send(message)
+            response_json['body'] = message
+            response_json['type'] = MessageType.CHAT.value
+            await connections[to_id].send(json.dumps(response_json))
             
 async def main():
-    async with serve(echo, "localhost", 8765):
+    print("Starting server...")
+    
+    async with serve(handle, "localhost", 8765):
         await asyncio.Future()  # run forever
 
 asyncio.run(main())
