@@ -15,9 +15,10 @@ from_client_id = int(args.from_client_id[0])
 to_client_id = int(args.to_client_id[0])
 
 connection_string = "ws://localhost:8765"    
+get_messages_exit_flag = threading.Event()
 
 def get_messages(websocket):
-    while True:
+    while not get_messages_exit_flag.is_set():
         response = websocket.recv()
         response_json = json.loads(response)
         response_body = response_json["body"]
@@ -37,7 +38,7 @@ def send_message(message: str, websocket, type: MessageType):
     
     websocket.send(json.dumps(message_json))     
 
-def run():
+def run_client():
     websocket = connect(connection_string)
     
     message = "Connect me please"
@@ -46,12 +47,24 @@ def run():
     print(f"Connecting {from_client_id} to server...")
 
     get_messages_thread = threading.Thread(target=get_messages, args=(websocket,))
+    get_messages_thread.daemon = True
     get_messages_thread.start()
 
-    while True:
-        send_message(message, websocket, type)
-        message = input()
-        type = MessageType.CHAT
+    try:
+        while True:
+            send_message(message, websocket, type)
+            message = input()
+            type = MessageType.CHAT
+    except KeyboardInterrupt:
+        print("Disconnecting...")
         
-            
-run()
+        message = "Disconnect me please"
+        type = MessageType.DISCONNECT_ME
+        get_messages_exit_flag.set()
+        
+        send_message(message, websocket, type)
+        get_messages_thread.join()
+        
+        quit()
+
+run_client()
