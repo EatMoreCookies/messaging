@@ -3,7 +3,6 @@ import json
 import argparse
 import threading
 from models import MessageType
-import asyncio
 
 parser = argparse.ArgumentParser()
 parser.add_argument('from_client_id', type=int, nargs=1, help='from client ID')
@@ -15,11 +14,13 @@ from_client_id = int(args.from_client_id[0])
 to_client_id = int(args.to_client_id[0])
 
 connection_string = "ws://localhost:8765"    
-get_messages_exit_flag = threading.Event()
+get_messages_exit_flag = False
 
 def get_messages(websocket):
-    while not get_messages_exit_flag.is_set():
+    while not get_messages_exit_flag:
+        print("Waiting for message...")
         response = websocket.recv()
+        print("Recieved message")
         response_json = json.loads(response)
         response_body = response_json["body"]
         response_type = MessageType(response_json["type"])
@@ -60,9 +61,10 @@ def run_client():
         
         message = "Disconnect me please"
         type = MessageType.DISCONNECT_ME
-        get_messages_exit_flag.set()
+        get_messages_exit_flag = True
         
         send_message(message, websocket, type)
+        print("Waiting for thread to finish...")
         get_messages_thread.join()
         
         quit()

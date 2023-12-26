@@ -38,8 +38,9 @@ async def handle(websocket):
             print(f"Adding {from_id} to list of live connections...")
 
         if type == MessageType.DISCONNECT_ME:
+            await send_message(from_id, from_id, f"Successfully disconnected", MessageType.MESSAGE_RECIEVED)
+            await send_message(from_id, to_id, f"User {from_id} disconnected", MessageType.CHAT)
             del connections[from_id]
-            await send_message(from_id, to_id, f"User {from_id} disconnected", MessageType.MESSAGE_RECIEVED)
         else:
             connections[from_id] = websocket
             await send_message(from_id, from_id, "", MessageType.MESSAGE_RECIEVED)
