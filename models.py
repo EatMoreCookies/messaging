@@ -5,3 +5,4 @@ class MessageType(Enum):
     CONNECT_ME = 1
     MESSAGE_RECIEVED = 2
     DISCONNECT_ME = 3
+    DISCONNECT_SUCCESSFULL = 4
