@@ -79,6 +79,7 @@ def run_client():
 
         print(f"Disconnect request just set flag to {get_messages_exit_flag}")
         send_message(message, websocket, type)
+
         print("Waiting for thread to finish...")
         get_messages_thread.join()
         print("All threads finished")
